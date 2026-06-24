@@ -1,8 +1,8 @@
 # 3D Trimodal People Detection
 
-![Demo visualization: RGB and thermal YOLO masks with painted LiDAR point cloud and 3D detections](docs/demo_screenshot.png)
-
 Standalone reference for **YOLO26-seg (person) → fused MLP seed painting → PointPillar** on synchronized RGB + thermal + LiDAR frames.
+
+![Demo visualization: RGB and thermal YOLO masks with painted LiDAR point cloud and 3D detections](docs/demo_screenshot.png)
 
 ## Pipeline
 
@@ -33,11 +33,6 @@ git clone --recurse-submodules git@github.com:MarkusKramer1/3D-Trimodal-People-D
 cd 3D-Trimodal-People-Detection
 ```
 
-Or, if already cloned:
-
-```bash
-git submodule update --init third_party/mmdetection3d
-```
 
 ```bash
 bash scripts/setup_conda_env.sh
