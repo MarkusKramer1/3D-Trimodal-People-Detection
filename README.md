@@ -1,5 +1,7 @@
 # 3D Trimodal People Detection
 
+![Demo visualization: RGB and thermal YOLO masks with painted LiDAR point cloud and 3D detections](docs/demo_screenshot.png)
+
 Standalone reference for **YOLO26-seg (person) → fused MLP seed painting → PointPillar** on synchronized RGB + thermal + LiDAR frames.
 
 ## Pipeline
