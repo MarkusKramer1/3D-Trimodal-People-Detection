@@ -1,0 +1,4 @@
+[submodule "third_party/mmdetection3d"]
+	path = third_party/mmdetection3d
+	url = https://github.com/open-mmlab/mmdetection3d.git
+	branch = dev-1.x

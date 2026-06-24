@@ -1,0 +1,13 @@
+[
+  {
+    "subset_folder": "example_scene",
+    "location": "piloty",
+    "action": [
+      "walking"
+    ],
+    "weather": [
+      "clear"
+    ],
+    "isOutside": true
+  }
+]

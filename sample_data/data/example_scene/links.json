@@ -1,0 +1,11 @@
+[
+  {
+    "lidar_token": "858192b5-127f-42b8-b128-11df6ca93726ae2a",
+    "max_time_diff": 0.008928504,
+    "next": "e7170200-7838-4ff9-bd08-8c6a5f57216fccce",
+    "prev": "25983380-b2cc-472f-90a8-18e6717a04a210cc",
+    "rgb_token": "944e38ee-427d-4d40-93f1-389bfb86ae1b0a0b",
+    "thermal_token": "f4e6fe13-da86-478a-b313-4904d71fda5692f5",
+    "token": "3241c517-feaa-4cd9-89b1-99cff4873523c222"
+  }
+]

@@ -1,0 +1,12 @@
+# Conda base for the people_detection pipeline (Python only).
+# Full install (torch, OpenMMLab, MMDet3D, pip deps):
+#   bash scripts/setup_conda_env.sh
+#
+# Manual create only — still run setup_conda_env.sh steps after activating:
+#   conda env create -f environment.yml && conda activate people_detection
+name: people_detection
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip

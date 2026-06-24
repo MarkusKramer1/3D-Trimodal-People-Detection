@@ -1,0 +1,29 @@
+[
+  {
+    "calibrated_sensor_token": "c33bc63d-1f2a-48a6-8792-58c1b0f5571629d4",
+    "filename": "/lidar/1758204262009241679.pcd",
+    "format": "pcd",
+    "height": 0.0,
+    "timestamp": 1758204262009241679,
+    "token": "858192b5-127f-42b8-b128-11df6ca93726ae2a",
+    "width": 0.0
+  },
+  {
+    "calibrated_sensor_token": "8fbf8864-94f7-4a32-b0b0-3646df9a8872543b",
+    "filename": "/rgb/1758204262009868408_rgb.jpg",
+    "format": "jpg",
+    "height": 480.0,
+    "timestamp": 1758204262009868408,
+    "token": "944e38ee-427d-4d40-93f1-389bfb86ae1b0a0b",
+    "width": 640.0
+  },
+  {
+    "calibrated_sensor_token": "a8cd032c-5801-4fde-836e-4ecd7b29346134a9",
+    "filename": "/thermal/1758204262000939904_flir.jpg",
+    "format": "jpg",
+    "height": 480.0,
+    "timestamp": 1758204262000939904,
+    "token": "f4e6fe13-da86-478a-b313-4904d71fda5692f5",
+    "width": 640.0
+  }
+]

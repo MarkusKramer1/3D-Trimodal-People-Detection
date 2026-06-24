@@ -1,0 +1,19 @@
+# YOLO26-seg + fused MLP seed painting (paper reference inference).
+
+paint:
+  mask_erosion_px: 3
+  seed_outlier_threshold_m: 0.35
+  min_seeds: 3
+  max_range_m: 40.0
+  feature_layout: xyz+intensity+is_virtual
+  seed_cluster_eps_m: 0.35
+  dedup_voxel_m: 0.005
+  rng_seed: 0
+  exclude_ground_points: true
+  ground_clearance_m: 0.08
+  seed_scorer_model: checkpoints/mlp_fused.pkl
+  seed_scorer_threshold: 0.5
+  seed_scorer_topk_fallback: true
+  seed_scorer_fast_path: true
+  seed_scorer_max_seeds_per_instance: 256
+  seed_scorer_thermal_from_rgb: true
