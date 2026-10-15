@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify that the people_detection environment can import and run all pipeline stages."""
+"""Verify that the PaintFusion environment can import and run the pipeline."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ def main() -> int:
     import numpy as np  # noqa: F401
     import torch
 
-    from src.mmdet3d_paths import resolve_mmdet3d_root, sync_pointpillar_project
+    from src.mmdet3d_paths import resolve_mmdet3d_root
 
     print(f"Python: {sys.version.split()[0]}")
     print(f"PyTorch: {torch.__version__}  cuda_available={torch.cuda.is_available()}")
@@ -49,11 +49,10 @@ def main() -> int:
     mmdet3d_root = resolve_mmdet3d_root()
     print(f"[OK] MMDetection3D submodule at {mmdet3d_root}")
 
-    pp_project = sync_pointpillar_project(mmdet3d_root)
-    _check(
-        "PointPillar project",
-        lambda: (_ for _ in ()).throw(FileNotFoundError(str(pp_project))) if not pp_project.is_dir() else None,
-    )
+    config_path = PAPER_REF_ROOT / "configs" / "paintfusion.py"
+    if not config_path.is_file():
+        raise SystemExit(f"[FAIL] PaintFusion config: missing {config_path}")
+    print(f"[OK] PaintFusion config at {config_path}")
 
     if args.run_pipeline:
         from src.fast_pipeline import FastPipeline  # noqa: E402
@@ -61,7 +60,6 @@ def main() -> int:
         pipeline = FastPipeline(
             data_root=PAPER_REF_ROOT / "sample_data",
             device=args.device,
-            prefer_tensorrt=False,
         )
         result = pipeline.run_frame("example_scene", 0, score_thr=0.1)
         assert result.detections is not None

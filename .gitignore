@@ -2,5 +2,5 @@
 __pycache__/
 *.pyc
 outputs/
-._yolo_load_cache/
-.pytest_cache/
+*.engine
+third_party/mmdetection3d/projects/PointPillar/

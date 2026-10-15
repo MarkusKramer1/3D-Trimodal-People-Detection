@@ -23,12 +23,6 @@ def main() -> int:
     parser.add_argument("--score-thr", type=float, default=0.1)
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument(
-        "--prefer-tensorrt",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="Use TensorRT engines when available (default: off for portability)",
-    )
-    parser.add_argument(
         "--max-points",
         type=int,
         default=120_000,
@@ -40,14 +34,13 @@ def main() -> int:
     pipeline = FastPipeline(
         data_root=args.data_root,
         device=args.device,
-        prefer_tensorrt=args.prefer_tensorrt,
     )
     result = pipeline.run_frame(args.scene, args.frame_idx, score_thr=args.score_thr)
 
     if result.detections is None:
         raise SystemExit(
             "PointPillar detector not available. Install dependencies:\n"
-            "  bash scripts/setup_env.sh"
+            "  bash scripts/setup_conda_env.sh"
         )
 
     n_virt = int(result.paint.is_virtual.sum())

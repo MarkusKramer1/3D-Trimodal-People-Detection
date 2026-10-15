@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,14 +10,14 @@ from typing import Any
 
 import numpy as np
 
-from src.mmdet3d_paths import ensure_mmdet3d_on_path, sync_pointpillar_project
+from src.mmdet3d_paths import ensure_mmdet3d_on_path
 
-PAPER_REF_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 _SETUP_HINT = (
     "Install the OpenMMLab stack and MMDetection3D submodule:\n"
     "  git submodule update --init third_party/mmdetection3d\n"
-    "  bash scripts/setup_env.sh"
+    "  bash scripts/setup_conda_env.sh"
 )
 
 
@@ -86,13 +87,15 @@ class PointPillarRuntime:
         mmdet3d_root: Path | None = None,
         device: str = "cuda:0",
     ) -> None:
-        self.config_path = (
-            config_path or PAPER_REF_ROOT / "pointpillar/configs/inference.py"
+        self.config_path = (config_path or REPO_ROOT / "configs" / "paintfusion.py").resolve()
+        self.checkpoint_path = (
+            checkpoint_path or REPO_ROOT / "checkpoints" / "paintfusion_pointpillars.pth"
         ).resolve()
-        self.checkpoint_path = (checkpoint_path or PAPER_REF_ROOT / "checkpoints/epoch_200.pth").resolve()
+        repo_s = str(REPO_ROOT)
+        if repo_s not in sys.path:
+            sys.path.insert(0, repo_s)
         self.mmdet3d_root = ensure_mmdet3d_on_path(mmdet3d_root)
         self.device = device
-        sync_pointpillar_project(self.mmdet3d_root)
 
         try:
             from mmengine.config import Config  # noqa: E402
@@ -121,10 +124,6 @@ class PointPillarRuntime:
         )
         self._axis_align = np.eye(4, dtype=np.float32)
         self._model.eval()
-        import torch  # noqa: E402
-
-        if str(device).startswith("cuda") and torch.cuda.is_available():
-            torch.backends.cudnn.benchmark = True
 
     def detect(
         self,
@@ -147,11 +146,6 @@ class PointPillarRuntime:
             )
         )
         batch = pseudo_collate([data])
-        use_cuda = str(self.device).startswith("cuda") and torch.cuda.is_available()
         with torch.inference_mode():
-            if use_cuda:
-                with torch.autocast(device_type="cuda", dtype=torch.float16):
-                    pred = self._model.test_step(batch)[0]
-            else:
-                pred = self._model.test_step(batch)[0]
+            pred = self._model.test_step(batch)[0]
         return _pred_to_detection(pred, score_thr)

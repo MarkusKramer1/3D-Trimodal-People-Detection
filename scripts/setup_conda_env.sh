@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Create the people_detection conda env (YOLO26-seg + MLP seed painting + PointPillar).
+# Create the paintfusion conda env (YOLO26-seg + MLP seed painting + PointPillars).
 set -euo pipefail
 
 PAPER_REF_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MMDET3D_ROOT="$PAPER_REF_ROOT/third_party/mmdetection3d"
-ENV_NAME="${ENV_NAME:-people_detection}"
+ENV_NAME="${ENV_NAME:-paintfusion}"
 CUDA_INDEX="${CUDA_INDEX:-https://download.pytorch.org/whl/cu121}"
 
-echo "==> people_detection conda environment"
+echo "==> paintfusion conda environment"
 echo "    PAPER_REF_ROOT=$PAPER_REF_ROOT"
 echo "    MMDET3D_ROOT=$MMDET3D_ROOT"
 echo "    ENV_NAME=$ENV_NAME"
@@ -18,8 +18,7 @@ if [[ ! -d "$MMDET3D_ROOT/mmdet3d" ]]; then
 fi
 
 if conda env list | awk '{print $1}' | grep -qx "$ENV_NAME"; then
-  echo "Conda env '$ENV_NAME' already exists."
-  echo "Run bash scripts/finish_conda_env.sh to complete a partial install, or:"
+  echo "Conda env '$ENV_NAME' already exists. Remove it first:"
   echo "  conda env remove -n $ENV_NAME"
   exit 1
 fi
@@ -54,12 +53,6 @@ pip install "$MMDET3D_ROOT" --no-build-isolation
 pushd "$MMDET3D_ROOT" >/dev/null
 python setup.py develop --no-deps
 popd >/dev/null
-
-echo "==> PointPillar custom project"
-PP_DST="$MMDET3D_ROOT/projects/PointPillar"
-if [[ ! -d "$PP_DST" ]]; then
-  cp -r "$PAPER_REF_ROOT/pointpillar" "$PP_DST"
-fi
 
 echo "==> YOLO + point painting Python deps"
 pip install -r "$PAPER_REF_ROOT/requirements.txt"

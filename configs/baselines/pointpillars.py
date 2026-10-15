@@ -1,0 +1,576 @@
+# TriSAR-3D baseline config.
+# LiDAR-only PointPillars baseline.
+# Points: x, y, z, intensity (4 channels). The stored bins have 5 columns; the last is unused.
+#
+# Train from this repository so `datasets.trisar3d` imports.
+
+auto_scale_lr = dict(base_batch_size=48, enable=False)
+backend_args = None
+batch_size = 8
+class_names = [
+    'Pedestrian',
+]
+custom_imports = dict(imports=[
+        'datasets.trisar3d',
+])
+data_root = 'data/trisar3d'
+dataset_type = 'TriSAR3DDataset'
+default_hooks = dict(
+    checkpoint=dict(interval=5, type='CheckpointHook'),
+    logger=dict(interval=50, type='LoggerHook'),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    timer=dict(type='IterTimerHook'),
+    visualization=dict(type='Det3DVisualizationHook'))
+default_scope = 'mmdet3d'
+env_cfg = dict(
+    cudnn_benchmark=False,
+    dist_cfg=dict(backend='nccl'),
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0))
+eval_pipeline = [
+    dict(
+        coord_type='LIDAR',
+        load_dim=5,
+        type='LoadPointsFromFile',
+        use_dim=[
+            0,
+            1,
+            2,
+            3,
+        ]),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        point_cloud_range=[
+            -30.0,
+            -39.68,
+            -6,
+            -0.72,
+            39.68,
+            6,
+        ],
+        type='PointsRangeFilter'),
+    dict(
+        point_cloud_range=[
+            -30.0,
+            -39.68,
+            -6,
+            -0.72,
+            39.68,
+            6,
+        ],
+        type='ObjectRangeFilter'),
+    dict(
+        keys=[
+            'points',
+            'gt_labels_3d',
+            'gt_bboxes_3d',
+        ],
+        type='Pack3DDetInputs'),
+]
+launcher = 'none'
+load_from = 'train_ws/pointpillar_paper_no_fp/vppv2_1_30_occluded_60e/pointpillar_normalized/epoch_60.pth'
+log_level = 'INFO'
+log_processor = dict(by_epoch=True, type='LogProcessor', window_size=1)
+lr = 0.0005
+metainfo = dict(classes=[
+    'Pedestrian',
+])
+model = dict(
+    backbone=dict(
+        in_channels=16,
+        layer_nums=[
+            3,
+            5,
+            5,
+        ],
+        layer_strides=[
+            2,
+            2,
+            2,
+        ],
+        out_channels=[
+            16,
+            32,
+            64,
+        ],
+        type='SECOND'),
+    bbox_head=dict(
+        anchor_generator=dict(
+            ranges=[
+                [
+                    -30.0,
+                    -39.68,
+                    -6,
+                    -0.72,
+                    39.68,
+                    6,
+                ],
+            ],
+            reshape_out=False,
+            rotations=[
+                0.0,
+                1.57,
+            ],
+            sizes=[
+                [
+                    0.55,
+                    0.65,
+                    1.75,
+                ],
+                [
+                    0.65,
+                    0.9,
+                    1.1,
+                ],
+                [
+                    0.7,
+                    1.7,
+                    0.5,
+                ],
+            ],
+            type='AlignedAnchor3DRangeGenerator'),
+        assign_per_class=True,
+        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
+        diff_rad_by_sin=True,
+        feat_channels=48,
+        in_channels=48,
+        loss_bbox=dict(
+            beta=0.1111111111111111,
+            loss_weight=2.0,
+            type='mmdet.SmoothL1Loss'),
+        loss_cls=dict(
+            alpha=0.25,
+            gamma=2.0,
+            loss_weight=1.0,
+            type='mmdet.FocalLoss',
+            use_sigmoid=True),
+        loss_dir=dict(
+            loss_weight=0.2, type='mmdet.CrossEntropyLoss', use_sigmoid=False),
+        num_classes=1,
+        type='Anchor3DHead',
+        use_direction_classifier=True),
+    data_preprocessor=dict(
+        type='Det3DDataPreprocessor',
+        voxel=True,
+        voxel_layer=dict(
+            max_num_points=32,
+            max_voxels=(
+                16000,
+                40000,
+            ),
+            point_cloud_range=[
+                -30.0,
+                -39.68,
+                -6,
+                -0.72,
+                39.68,
+                6,
+            ],
+            voxel_size=[
+                0.16,
+                0.16,
+                12.0,
+            ])),
+    middle_encoder=dict(
+        in_channels=16, output_shape=[
+            496,
+            192,
+        ], type='PointPillarsScatter'),
+    neck=dict(
+        in_channels=[
+            16,
+            32,
+            64,
+        ],
+        out_channels=[
+            16,
+            16,
+            16,
+        ],
+        type='SECONDFPN',
+        upsample_strides=[
+            1,
+            2,
+            4,
+        ]),
+    test_cfg=dict(
+        max_num=50,
+        min_bbox_size=0,
+        nms_across_levels=False,
+        nms_pre=100,
+        nms_thr=0.01,
+        score_thr=0.1,
+        use_rotate_nms=True),
+    train_cfg=dict(
+        allowed_border=0,
+        assigner=dict(
+            ignore_iof_thr=-1,
+            iou_calculator=dict(type='BboxOverlapsNearest3D'),
+            min_pos_iou=0.2,
+            neg_iou_thr=0.2,
+            pos_iou_thr=0.35,
+            type='Max3DIoUAssigner'),
+        debug=False,
+        pos_weight=-1),
+    type='VoxelNet',
+    voxel_encoder=dict(
+        feat_channels=[
+            16,
+        ],
+        in_channels=4,
+        point_cloud_range=[
+            -30.0,
+            -39.68,
+            -6,
+            -0.72,
+            39.68,
+            6,
+        ],
+        type='PillarFeatureNet',
+        voxel_size=[
+            0.16,
+            0.16,
+            12.0,
+        ],
+        with_distance=False))
+optim_wrapper = dict(
+    clip_grad=dict(max_norm=10, norm_type=2),
+    optimizer=dict(
+        betas=(
+            0.95,
+            0.99,
+        ), lr=0.0005, type='AdamW', weight_decay=0.01),
+    type='OptimWrapper')
+param_scheduler = [
+    dict(
+        begin=0,
+        by_epoch=True,
+        convert_to_iter_based=True,
+        end=20,
+        end_factor=1.0,
+        start_factor=0.1,
+        type='LinearLR'),
+    dict(
+        T_max=40,
+        begin=20,
+        by_epoch=True,
+        convert_to_iter_based=True,
+        end=60,
+        eta_min=5.0000000000000004e-08,
+        type='CosineAnnealingLR'),
+]
+point_cloud_range = [
+    -30.0,
+    -39.68,
+    -6,
+    -0.72,
+    39.68,
+    6,
+]
+size = 1
+test_cfg = dict(type='TestLoop')
+test_dataloader = dict(
+    batch_size=8,
+    dataset=dict(
+        ann_file='infos_test.pkl',
+        data_root=
+        'data/trisar3d',
+        pipeline=[
+            dict(
+                coord_type='LIDAR',
+                load_dim=5,
+                type='LoadPointsFromFile',
+                use_dim=[
+                    0,
+                    1,
+                    2,
+                    3,
+                ]),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=True,
+                with_label_3d=True),
+            dict(
+                point_cloud_range=[
+                    -30.0,
+                    -39.68,
+                    -6,
+                    -0.72,
+                    39.68,
+                    6,
+                ],
+                type='PointsRangeFilter'),
+            dict(
+                point_cloud_range=[
+                    -30.0,
+                    -39.68,
+                    -6,
+                    -0.72,
+                    39.68,
+                    6,
+                ],
+                type='ObjectRangeFilter'),
+            dict(
+                keys=[
+                    'points',
+                    'gt_labels_3d',
+                    'gt_bboxes_3d',
+                ],
+                type='Pack3DDetInputs'),
+        ],
+        type='TriSAR3DDataset'),
+    num_workers=2)
+test_evaluator = [
+    dict(iou_thr=[
+        0.25,
+        0.5,
+        0.7,
+    ], type='Simple3DmAP'),
+    dict(
+        out_file_path=
+        '/pfss/mlde/workspaces/mlde_wsp_PI_Stryk/jw79daqu/mmdetection3d-dev-1.x/train_ws/pointpillar_paper_no_fp/vppv2_1_30_occluded_60e/pointpillar_normalized/results.pkl',
+        type='DumpResults'),
+]
+test_pipeline = [
+    dict(
+        coord_type='LIDAR',
+        load_dim=5,
+        type='LoadPointsFromFile',
+        use_dim=[
+            0,
+            1,
+            2,
+            3,
+        ]),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        point_cloud_range=[
+            -30.0,
+            -39.68,
+            -6,
+            -0.72,
+            39.68,
+            6,
+        ],
+        type='PointsRangeFilter'),
+    dict(
+        point_cloud_range=[
+            -30.0,
+            -39.68,
+            -6,
+            -0.72,
+            39.68,
+            6,
+        ],
+        type='ObjectRangeFilter'),
+    dict(
+        keys=[
+            'points',
+            'gt_labels_3d',
+            'gt_bboxes_3d',
+        ],
+        type='Pack3DDetInputs'),
+]
+train_cfg = dict(by_epoch=True, max_epochs=60, val_interval=5)
+train_dataloader = dict(
+    batch_size=8,
+    dataset=dict(
+        ann_file='infos_train.pkl',
+        data_root=
+        'data/trisar3d',
+        filter_empty_gt=False,
+        pipeline=[
+            dict(
+                coord_type='LIDAR',
+                load_dim=5,
+                type='LoadPointsFromFile',
+                use_dim=[
+                    0,
+                    1,
+                    2,
+                    3,
+                ]),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=True,
+                with_label_3d=True),
+            dict(
+                rot_range=[
+                    -0.785,
+                    0.785,
+                ],
+                scale_ratio_range=[
+                    0.9,
+                    1.1,
+                ],
+                translation_std=[
+                    1.0,
+                    1.0,
+                    1.0,
+                ],
+                type='GlobalRotScaleTrans'),
+            dict(flip_ratio_bev_horizontal=0.5, type='RandomFlip3D'),
+            dict(
+                point_cloud_range=[
+                    -30.0,
+                    -39.68,
+                    -6,
+                    -0.72,
+                    39.68,
+                    6,
+                ],
+                type='PointsRangeFilter'),
+            dict(
+                point_cloud_range=[
+                    -30.0,
+                    -39.68,
+                    -6,
+                    -0.72,
+                    39.68,
+                    6,
+                ],
+                type='ObjectRangeFilter'),
+            dict(type='PointShuffle'),
+            dict(
+                keys=[
+                    'points',
+                    'gt_labels_3d',
+                    'gt_bboxes_3d',
+                ],
+                type='Pack3DDetInputs'),
+        ],
+        type='TriSAR3DDataset'),
+    num_workers=2,
+    shuffle=True)
+train_pipeline = [
+    dict(
+        coord_type='LIDAR',
+        load_dim=5,
+        type='LoadPointsFromFile',
+        use_dim=[
+            0,
+            1,
+            2,
+            3,
+        ]),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(
+        rot_range=[
+            -0.785,
+            0.785,
+        ],
+        scale_ratio_range=[
+            0.9,
+            1.1,
+        ],
+        translation_std=[
+            1.0,
+            1.0,
+            1.0,
+        ],
+        type='GlobalRotScaleTrans'),
+    dict(flip_ratio_bev_horizontal=0.5, type='RandomFlip3D'),
+    dict(
+        point_cloud_range=[
+            -30.0,
+            -39.68,
+            -6,
+            -0.72,
+            39.68,
+            6,
+        ],
+        type='PointsRangeFilter'),
+    dict(
+        point_cloud_range=[
+            -30.0,
+            -39.68,
+            -6,
+            -0.72,
+            39.68,
+            6,
+        ],
+        type='ObjectRangeFilter'),
+    dict(type='PointShuffle'),
+    dict(
+        keys=[
+            'points',
+            'gt_labels_3d',
+            'gt_bboxes_3d',
+        ],
+        type='Pack3DDetInputs'),
+]
+val_cfg = dict(type='ValLoop')
+val_dataloader = dict(
+    batch_size=8,
+    dataset=dict(
+        ann_file='infos_val.pkl',
+        data_root=
+        'data/trisar3d',
+        pipeline=[
+            dict(
+                coord_type='LIDAR',
+                load_dim=5,
+                type='LoadPointsFromFile',
+                use_dim=[
+                    0,
+                    1,
+                    2,
+                    3,
+                ]),
+            dict(
+                type='LoadAnnotations3D',
+                with_bbox_3d=True,
+                with_label_3d=True),
+            dict(
+                point_cloud_range=[
+                    -30.0,
+                    -39.68,
+                    -6,
+                    -0.72,
+                    39.68,
+                    6,
+                ],
+                type='PointsRangeFilter'),
+            dict(
+                point_cloud_range=[
+                    -30.0,
+                    -39.68,
+                    -6,
+                    -0.72,
+                    39.68,
+                    6,
+                ],
+                type='ObjectRangeFilter'),
+            dict(
+                keys=[
+                    'points',
+                    'gt_labels_3d',
+                    'gt_bboxes_3d',
+                ],
+                type='Pack3DDetInputs'),
+        ],
+        type='TriSAR3DDataset'),
+    num_workers=2)
+val_evaluator = dict(
+    metrics=[
+        dict(iou_thr=0.5, type='Simple3DmAP'),
+    ], type='Evaluator')
+vis_backends = [
+    dict(type='LocalVisBackend'),
+    dict(type='TensorboardVisBackend'),
+]
+visualizer = dict(
+    name='visualizer',
+    save_dir=
+    '/pfss/mlde/workspaces/mlde_wsp_PI_Stryk/jw79daqu/mmdetection3d-dev-1.x/train_ws/pointpillar_paper_no_fp/vppv2_1_30_occluded_60e/pointpillar_normalized/vis',
+    type='Det3DLocalVisualizer',
+    vis_backends=[
+        dict(type='LocalVisBackend'),
+        dict(type='TensorboardVisBackend'),
+    ])
+voxel_size = [
+    0.16,
+    0.16,
+    12.0,
+]
+work_dir = '/pfss/mlde/workspaces/mlde_wsp_PI_Stryk/jw79daqu/mmdetection3d-dev-1.x/train_ws/pointpillar_paper_no_fp/vppv2_1_30_occluded_60e/pointpillar_normalized'

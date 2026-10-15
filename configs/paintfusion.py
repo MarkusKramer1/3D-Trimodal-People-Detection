@@ -1,10 +1,9 @@
-"""Inference config for paper PointPillar pedestrian model (epoch 200)."""
+# PaintFusion 3D head: PointPillars on the painted LiDAR cloud.
+# Stock MMDetection3D VoxelNet. The training runs used an empty subclass
+# named VoxelNetWithValLoss; it added no parameters, so these weights load
+# into VoxelNet directly.
 
-custom_imports = dict(imports=[
-    'projects.PointPillar.models.VoxelNetWithValLoss',
-    'projects.PointPillar.transforms.normalize_intensity',
-    'projects.PointPillar.datasets.MyCustomDataset',
-])
+custom_imports = dict(imports=['datasets.trisar3d'])
 
 default_scope = 'mmdet3d'
 
@@ -14,7 +13,7 @@ metainfo = dict(classes=['Pedestrian'])
 point_cloud_range = [-30.0, -39.68, -6, -0.72, 39.68, 6]
 
 model = dict(
-    type='VoxelNetWithValLoss',
+    type='VoxelNet',
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
         voxel=True,
@@ -124,7 +123,7 @@ test_dataloader = dict(
     batch_size=1,
     num_workers=0,
     dataset=dict(
-        type='MyCustomDataset',
+        type='TriSAR3DDataset',
         data_root='.',
         ann_file='',
         box_type_3d='LiDAR',

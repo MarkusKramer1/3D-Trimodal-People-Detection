@@ -1,10 +1,7 @@
-# Conda base for the people_detection pipeline (Python only).
-# Full install (torch, OpenMMLab, MMDet3D, pip deps):
+# Conda base for PaintFusion (Python only).
+# Full install (torch, OpenMMLab, MMDetection3D, pip deps):
 #   bash scripts/setup_conda_env.sh
-#
-# Manual create only — still run setup_conda_env.sh steps after activating:
-#   conda env create -f environment.yml && conda activate people_detection
-name: people_detection
+name: paintfusion
 channels:
   - defaults
 dependencies:

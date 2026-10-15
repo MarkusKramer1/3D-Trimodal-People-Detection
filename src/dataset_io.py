@@ -10,21 +10,37 @@ from typing import Any
 import numpy as np
 
 
+def scene_dir(project_root: Path, subset_folder: str) -> Path:
+    """Directory of one sequence.
+
+    The TriSAR-3D release keeps each ``rosbag2_*`` folder next to
+    ``dataset.json``. The bundled sample nests the same folder under ``data/``.
+    """
+    root = Path(project_root)
+    direct = root / subset_folder
+    nested = root / "data" / subset_folder
+    if (direct / "links.json").is_file():
+        return direct
+    if (nested / "links.json").is_file():
+        return nested
+    return direct
+
+
 def load_links(project_root: Path, subset_folder: str) -> list[dict[str, Any]]:
-    p = project_root / "data" / subset_folder / "links.json"
+    p = scene_dir(project_root, subset_folder) / "links.json"
     with open(p, encoding="utf-8") as f:
         return json.load(f)
 
 
 def load_samples(project_root: Path, subset_folder: str) -> list[dict[str, Any]]:
-    p = project_root / "data" / subset_folder / "samples.json"
+    p = scene_dir(project_root, subset_folder) / "samples.json"
     with open(p, encoding="utf-8") as f:
         return json.load(f)
 
 
 def sample_full_path(project_root: Path, subset_folder: str, filename: str) -> Path:
     rel = filename.lstrip("/")
-    return (project_root / "data" / subset_folder / "samples" / rel).resolve()
+    return (scene_dir(project_root, subset_folder) / "samples" / rel).resolve()
 
 
 def build_token_lookup(samples: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:

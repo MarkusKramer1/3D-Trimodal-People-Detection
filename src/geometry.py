@@ -11,9 +11,11 @@ import numpy as np
 from PIL import Image
 from scipy.spatial.transform import Rotation
 
+from src.dataset_io import scene_dir
+
 
 def load_calibrations(project_root: Path, subset_folder: str) -> dict[str, dict[str, Any]]:
-    p = project_root / "data" / subset_folder / "calibrations.json"
+    p = scene_dir(project_root, subset_folder) / "calibrations.json"
     with open(p, encoding="utf-8") as f:
         rows = json.load(f)
     return {c["token"]: c["calibration"] for c in rows}

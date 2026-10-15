@@ -72,31 +72,22 @@ class FastPipeline:
         rgb_settings: YoloInferenceSettings | None = None,
         thermal_settings: YoloInferenceSettings | None = None,
         parallel_yolo: bool = True,
-        prefer_tensorrt: bool = True,
     ) -> None:
         root = Path(__file__).resolve().parents[1]
         self.data_root = Path(data_root).resolve()
         cfg_path = seed_config or root / "configs/seed_painting.yaml"
         self.paint_cfg = config_to_virtual_paint(load_experiment_config(cfg_path))
 
-        rgb_ckpt = rgb_checkpoint or root / "checkpoints/best_rgb_yolo.ptrom"
-        th_ckpt = thermal_checkpoint or root / "checkpoints/best_thermal_yolo.ptrom"
+        rgb_ckpt = rgb_checkpoint or root / "checkpoints/yolo26n_seg_rgb.pt"
+        th_ckpt = thermal_checkpoint or root / "checkpoints/yolo26n_seg_thermal.pt"
         self.rgb_settings = rgb_settings or default_inference_settings("rgb")
         self.thermal_settings = thermal_settings or default_inference_settings("thermal")
 
-        self._rgb_yolo = load_yolo_seg_model(
-            rgb_ckpt,
-            prefer_tensorrt=prefer_tensorrt,
-            imgsz=self.rgb_settings.imgsz,
-        )
-        self._thermal_yolo = load_yolo_seg_model(
-            th_ckpt,
-            prefer_tensorrt=prefer_tensorrt,
-            imgsz=self.thermal_settings.imgsz,
-        )
+        self._rgb_yolo = load_yolo_seg_model(rgb_ckpt)
+        self._thermal_yolo = load_yolo_seg_model(th_ckpt)
         self._device = device
         self._parallel_yolo = parallel_yolo
-        self._prefer_tensorrt = prefer_tensorrt
+        self._use_cuda = str(device).startswith("cuda")
 
         self._detector: PointPillarRuntime | None = None
         if load_detector:
@@ -108,6 +99,14 @@ class FastPipeline:
             )
 
         self._scene_caches: dict[str, SequencePaintCache] = {}
+
+    def _cuda_sync(self) -> None:
+        if not self._use_cuda:
+            return
+        import torch
+
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
 
     def _scene_cache(self, scene: str) -> SequencePaintCache:
         if scene not in self._scene_caches:
@@ -190,12 +189,14 @@ class FastPipeline:
                 for mod in yolo_mods:
                     t0 = time.perf_counter()
                     inline[mod] = self._infer_masks_from_image(mod, images[mod])
+                    self._cuda_sync()
                     elapsed = time.perf_counter() - t0
                     if mod == "rgb":
                         timings.yolo_rgb_s = elapsed
                     else:
                         timings.yolo_thermal_s = elapsed
                 lidar_fut.result()
+            self._cuda_sync()
             timings.yolo_wall_s = time.perf_counter() - t_wall
         else:
             load_frame_lidar_cached(self._scene_cache(scene), frame_idx)
@@ -210,15 +211,18 @@ class FastPipeline:
             inline_masks_by_modality=inline,
             device=self._device,
         )
+        self._cuda_sync()
         timings.paint_s = time.perf_counter() - t0
         if paint is None:
             raise RuntimeError(err or "Seed painting failed")
 
         detections = None
         if self._detector is not None:
+            self._cuda_sync()
             t0 = time.perf_counter()
             detections = self._detector.detect(paint.features, score_thr=score_thr)
             timings.detect_s = time.perf_counter() - t0
+            self._cuda_sync()
 
         return FastPipelineResult(
             paint=paint,
