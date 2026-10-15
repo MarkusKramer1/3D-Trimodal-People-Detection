@@ -62,22 +62,11 @@ conda activate paintfusion
 
 The conda env is Python 3.10 with PyTorch 2.1.2 (CUDA 12.1), MMDetection3D from `third_party/mmdetection3d` (`dev-1.x`), and the packages in `requirements.txt`.
 
-## Dataset
-
-[TriSAR-3D](https://tudatalib.ulb.tu-darmstadt.de/items/383ef57d-559d-48a4-a697-28103f1eb120) is the dataset release on TUdatalib (`3d_trimodal_people_detection_dataset.zip`). Unzip it and pass that folder as `--data-root`. Each `rosbag2_*` directory next to `dataset.json` is one sequence, with `links.json`, `samples.json`, `calibrations.json`, `annotations.json`, `split.json`, the RGB and thermal COCO files, and `samples/lidar`, `samples/rgb`, and `samples/thermal`.
-
-```bash
-python scripts/run_pipeline.py \
-  --data-root /path/to/TriSAR-3D \
-  --scene rosbag2_2025_09_18-16_04_08_out \
-  --device cuda:0
-```
-
 ## Demo
 
 <img src="docs/demo_screenshot.png" alt="Demo visualization: RGB and thermal masks with the painted LiDAR point cloud and 3D detections" width="70%">
 
-`sample_data/` contains one frame in the same layout.
+`sample_data/` contains one frame. The commands below use that frame, so the full TriSAR-3D download is not required.
 
 ```bash
 python scripts/demo_visualize.py --device cuda:0
@@ -93,6 +82,17 @@ python scripts/verify_env.py --device cuda:0 --run-pipeline
 | `--score-thr` | `0.1` | 3D score threshold |
 | `--device` | `cuda:0` | PyTorch device |
 | `--save-detections` | — | Write detections as JSON (`run_pipeline.py` only) |
+
+## Dataset
+
+[TriSAR-3D](https://tudatalib.ulb.tu-darmstadt.de/items/383ef57d-559d-48a4-a697-28103f1eb120) is the dataset release on TUdatalib (`3d_trimodal_people_detection_dataset.zip`). Unzip it and pass that folder as `--data-root`. Each `rosbag2_*` directory next to `dataset.json` is one sequence, with `links.json`, `samples.json`, `calibrations.json`, `annotations.json`, `split.json`, the RGB and thermal COCO files, and `samples/lidar`, `samples/rgb`, and `samples/thermal`.
+
+```bash
+python scripts/run_pipeline.py \
+  --data-root /path/to/TriSAR-3D \
+  --scene rosbag2_2025_09_18-16_04_08_out \
+  --device cuda:0
+```
 
 ## Weights
 
