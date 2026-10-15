@@ -66,7 +66,6 @@ eval_pipeline = [
         type='Pack3DDetInputs'),
 ]
 launcher = 'none'
-load_from = None
 log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=1)
 lr = 0.0005
@@ -165,10 +164,6 @@ test_evaluator = [
         0.5,
         0.7,
     ], type='Simple3DmAP'),
-    dict(
-        out_file_path=
-        'work_dirs/pv_rcnn/results.pkl',
-        type='DumpResults'),
 ]
 test_pipeline = [
     dict(
@@ -400,8 +395,6 @@ vis_backends = [
 ]
 visualizer = dict(
     name='visualizer',
-    save_dir=
-    'work_dirs/pv_rcnn/vis',
     type='Det3DLocalVisualizer',
     vis_backends=[
         dict(type='LocalVisBackend'),
@@ -412,4 +405,3 @@ voxel_size = [
     0.16,
     0.3,
 ]
-work_dir = 'work_dirs/pv_rcnn'
