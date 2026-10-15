@@ -1,10 +1,8 @@
-# TriSAR-3D baseline config.
-# Trimodal BEVFusion baseline (Tri-BEVFusion).
-# RGB and thermal are both camera views of the MMDetection3D BEVFusion model,
-# with the same pretrained image backbone and no extra pretraining.
-# Points: x, y, z, intensity.
-#
-# Train from this repository so `datasets.trisar3d` imports.
+# bevfusion_trimodal training config.
+# Architecture: configs/baselines/models/bevfusion_trimodal.py
+# Info files live under data/trisar3d/.
+
+_base_ = ['./models/bevfusion_trimodal.py']
 
 auto_scale_lr = dict(base_batch_size=48, enable=False)
 backend_args = None
@@ -120,360 +118,13 @@ eval_pipeline = [
         type='Pack3DDetInputs'),
 ]
 launcher = 'none'
-load_from = 'train_ws/others_paper_no_fp/bev_lidar_cam_smaller_60e/epoch_60.pth'
+load_from = None
 log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=1)
 lr = 0.0005
 metainfo = dict(classes=[
     'Pedestrian',
 ])
-model = dict(
-    bbox_head=dict(
-        auxiliary=True,
-        bbox_coder=dict(
-            code_size=8,
-            out_size_factor=8,
-            pc_range=[
-                -42.24,
-                -42.24,
-            ],
-            post_center_range=[
-                -61.2,
-                -61.2,
-                -10.0,
-                61.2,
-                61.2,
-                10.0,
-            ],
-            score_threshold=0.0,
-            type='TransFusionBBoxCoder',
-            voxel_size=[
-                0.08,
-                0.08,
-            ]),
-        bn_momentum=0.1,
-        common_heads=dict(
-            center=[
-                2,
-                2,
-            ], dim=[
-                3,
-                2,
-            ], height=[
-                1,
-                2,
-            ], rot=[
-                2,
-                2,
-            ]),
-        decoder_layer=dict(
-            cross_attn_cfg=dict(dropout=0.1, embed_dims=8, num_heads=8),
-            ffn_cfg=dict(
-                act_cfg=dict(inplace=True, type='ReLU'),
-                embed_dims=8,
-                feedforward_channels=16,
-                ffn_drop=0.1,
-                num_fcs=2),
-            norm_cfg=dict(type='LN'),
-            pos_encoding_cfg=dict(input_channel=2, num_pos_feats=8),
-            self_attn_cfg=dict(dropout=0.1, embed_dims=8, num_heads=8),
-            type='TransformerDecoderLayer'),
-        hidden_channel=8,
-        in_channels=32,
-        loss_bbox=dict(
-            loss_weight=0.25, reduction='mean', type='mmdet.L1Loss'),
-        loss_cls=dict(
-            alpha=0.25,
-            gamma=2.0,
-            loss_weight=1.0,
-            reduction='mean',
-            type='mmdet.FocalLoss',
-            use_sigmoid=True),
-        loss_heatmap=dict(
-            loss_weight=1.0, reduction='mean', type='mmdet.GaussianFocalLoss'),
-        nms_kernel_size=3,
-        num_classes=1,
-        num_decoder_layers=1,
-        num_proposals=200,
-        test_cfg=dict(
-            dataset='TriSAR3DDataset',
-            grid_size=[
-                1056,
-                1056,
-                41,
-            ],
-            nms_type=None,
-            out_size_factor=8,
-            pc_range=[
-                -42.24,
-                -42.24,
-            ],
-            voxel_size=[
-                0.08,
-                0.08,
-                0.3,
-            ]),
-        train_cfg=dict(
-            assigner=dict(
-                cls_cost=dict(
-                    alpha=0.25,
-                    gamma=2.0,
-                    type='mmdet.FocalLossCost',
-                    weight=0.15),
-                iou_calculator=dict(coordinate='lidar', type='BboxOverlaps3D'),
-                iou_cost=dict(type='IoU3DCost', weight=0.25),
-                reg_cost=dict(type='BBoxBEVL1Cost', weight=0.25),
-                type='HungarianAssigner3D'),
-            code_weights=[
-                1.0,
-                1.0,
-                1.0,
-                1.0,
-                1.0,
-                1.0,
-                0.2,
-                0.2,
-            ],
-            dataset='TriSAR3DDataset',
-            gaussian_overlap=0.1,
-            grid_size=[
-                1056,
-                1056,
-                41,
-            ],
-            min_radius=2,
-            out_size_factor=8,
-            point_cloud_range=[
-                -42.24,
-                -42.24,
-                -6,
-                42.24,
-                42.24,
-                6,
-            ],
-            pos_weight=-1,
-            voxel_size=[
-                0.08,
-                0.08,
-                0.3,
-            ]),
-        type='TransFusionHead'),
-    data_preprocessor=dict(
-        bgr_to_rgb=False,
-        mean=[
-            123.675,
-            116.28,
-            103.53,
-        ],
-        pad_size_divisor=32,
-        std=[
-            58.395,
-            57.12,
-            57.375,
-        ],
-        type='Det3DDataPreprocessor',
-        voxelize_cfg=dict(
-            max_num_points=32,
-            max_voxels=(
-                16000,
-                40000,
-            ),
-            point_cloud_range=[
-                -42.24,
-                -42.24,
-                -6,
-                42.24,
-                42.24,
-                6,
-            ],
-            voxel_size=[
-                0.08,
-                0.08,
-                0.3,
-            ],
-            voxelize_reduce=True)),
-    fusion_layer=dict(
-        in_channels=[
-            80,
-            256,
-        ], out_channels=16, type='ConvFuser'),
-    img_backbone=dict(
-        attn_drop_rate=0.0,
-        convert_weights=True,
-        depths=[
-            2,
-            2,
-            6,
-            2,
-        ],
-        drop_path_rate=0.2,
-        drop_rate=0.0,
-        embed_dims=96,
-        init_cfg=dict(
-            checkpoint=
-            'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth',
-            type='Pretrained'),
-        mlp_ratio=4,
-        num_heads=[
-            3,
-            6,
-            12,
-            24,
-        ],
-        out_indices=[
-            1,
-            2,
-            3,
-        ],
-        patch_norm=True,
-        qk_scale=None,
-        qkv_bias=True,
-        type='mmdet.SwinTransformer',
-        window_size=7,
-        with_cp=False),
-    img_neck=dict(
-        act_cfg=dict(inplace=True, type='ReLU'),
-        in_channels=[
-            192,
-            384,
-            768,
-        ],
-        norm_cfg=dict(requires_grad=True, type='BN2d'),
-        num_outs=3,
-        out_channels=256,
-        start_level=0,
-        type='GeneralizedLSSFPN',
-        upsample_cfg=dict(align_corners=False, mode='bilinear')),
-    pts_backbone=dict(
-        conv_cfg=dict(bias=False, type='Conv2d'),
-        in_channels=16,
-        layer_nums=[
-            5,
-            5,
-        ],
-        layer_strides=[
-            1,
-            2,
-        ],
-        norm_cfg=dict(eps=0.001, momentum=0.01, type='BN'),
-        out_channels=[
-            8,
-            16,
-        ],
-        type='SECOND'),
-    pts_middle_encoder=dict(
-        block_type='basicblock',
-        encoder_channels=(
-            (
-                16,
-                16,
-                32,
-            ),
-            (
-                32,
-                32,
-                64,
-            ),
-            (
-                64,
-                64,
-                128,
-            ),
-            (
-                128,
-                128,
-            ),
-        ),
-        encoder_paddings=(
-            (
-                0,
-                0,
-                1,
-            ),
-            (
-                0,
-                0,
-                1,
-            ),
-            (
-                0,
-                0,
-                (
-                    1,
-                    1,
-                    0,
-                ),
-            ),
-            (
-                0,
-                0,
-            ),
-        ),
-        in_channels=4,
-        norm_cfg=dict(eps=0.001, momentum=0.01, type='BN1d'),
-        order=(
-            'conv',
-            'norm',
-            'act',
-        ),
-        sparse_shape=[
-            1056,
-            1056,
-            41,
-        ],
-        type='BEVFusionSparseEncoder'),
-    pts_neck=dict(
-        in_channels=[
-            8,
-            16,
-        ],
-        norm_cfg=dict(eps=0.001, momentum=0.01, type='BN'),
-        out_channels=[
-            16,
-            16,
-        ],
-        type='SECONDFPN',
-        upsample_cfg=dict(bias=False, type='deconv'),
-        upsample_strides=[
-            1,
-            2,
-        ],
-        use_conv_for_no_stride=True),
-    pts_voxel_encoder=dict(num_features=4, type='HardSimpleVFE'),
-    type='BEVFusion',
-    view_transform=dict(
-        dbound=[
-            1.0,
-            60.0,
-            0.5,
-        ],
-        downsample=2,
-        feature_size=[
-            32,
-            88,
-        ],
-        image_size=[
-            256,
-            704,
-        ],
-        in_channels=256,
-        out_channels=80,
-        type='DepthLSSTransform',
-        xbound=[
-            -39.68,
-            39.68,
-            0.3,
-        ],
-        ybound=[
-            -39.68,
-            39.68,
-            0.3,
-        ],
-        zbound=[
-            -10.0,
-            10.0,
-            20.0,
-        ]))
 optim_wrapper = dict(
     clip_grad=dict(max_norm=10, norm_type=2),
     optimizer=dict(
@@ -619,7 +270,7 @@ test_evaluator = [
     ], type='Simple3DmAP'),
     dict(
         out_file_path=
-        '/pfss/mlde/workspaces/mlde_wsp_PI_Stryk/jw79daqu/mmdetection3d-dev-1.x/train_ws/others_paper_no_fp/bev_lidar_cam_smaller_60e/results.pkl',
+        'work_dirs/bevfusion_trimodal/results.pkl',
         type='DumpResults'),
 ]
 test_pipeline = [
@@ -1047,7 +698,7 @@ vis_backends = [
 visualizer = dict(
     name='visualizer',
     save_dir=
-    '/pfss/mlde/workspaces/mlde_wsp_PI_Stryk/jw79daqu/mmdetection3d-dev-1.x/train_ws/others_paper_no_fp/bev_lidar_cam_smaller_60e/vis',
+    'work_dirs/bevfusion_trimodal/vis',
     type='Det3DLocalVisualizer',
     vis_backends=[
         dict(type='LocalVisBackend'),
@@ -1058,4 +709,4 @@ voxel_size = [
     0.08,
     0.3,
 ]
-work_dir = '/pfss/mlde/workspaces/mlde_wsp_PI_Stryk/jw79daqu/mmdetection3d-dev-1.x/train_ws/others_paper_no_fp/bev_lidar_cam_smaller_60e'
+work_dir = 'work_dirs/bevfusion_trimodal'

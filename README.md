@@ -100,7 +100,7 @@ Pretrained weights ship in `checkpoints/`: YOLO26n-seg for RGB and thermal, the 
 
 ## Baselines
 
-`configs/baselines/` contains the MMDetection3D configs for the detectors compared in the paper. Train one from this repository:
+`configs/baselines/` contains one MMDetection3D training config per detector in the paper. The architecture is in `configs/baselines/models/`. Each training config reads `data/trisar3d`: `infos_{train,val,test}.pkl` for the LiDAR baselines, and `infos_pointpainting_{train,val,test}.pkl` for PointPainting. Train one from this repository:
 
 ```bash
 export PYTHONPATH="$(pwd):$(pwd)/third_party/mmdetection3d:${PYTHONPATH}"

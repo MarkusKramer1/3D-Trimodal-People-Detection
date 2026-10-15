@@ -1,11 +1,8 @@
-# TriSAR-3D baseline config.
-# RGB + LiDAR PointPainting baseline.
-# PointPillars with 5 input channels: x, y, z, intensity, RGB segmentation score.
-# The cluster dump of this config was identical to the thermal one; the two
-# differ by which camera score is written into the extra channel.
-# The dumped test loader pointed at the train split; it now uses the test info file.
-#
-# Train from this repository so `datasets.trisar3d` imports.
+# pointpainting_rgb training config.
+# Architecture: configs/baselines/models/pointpainting_rgb.py
+# Info files live under data/trisar3d/.
+
+_base_ = ['./models/pointpainting_rgb.py']
 
 auto_scale_lr = dict(base_batch_size=48, enable=False)
 backend_args = None
@@ -72,171 +69,13 @@ eval_pipeline = [
         type='Pack3DDetInputs'),
 ]
 launcher = 'none'
-load_from = 'train_ws/others_paper_no_fp/pointpainting_60e_5/pointpillar_normalized_aug/epoch_60.pth'
+load_from = None
 log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=1)
 lr = 0.0005
 metainfo = dict(classes=[
     'Pedestrian',
 ])
-model = dict(
-    backbone=dict(
-        in_channels=16,
-        layer_nums=[
-            3,
-            5,
-            5,
-        ],
-        layer_strides=[
-            2,
-            2,
-            2,
-        ],
-        out_channels=[
-            16,
-            32,
-            64,
-        ],
-        type='SECOND'),
-    bbox_head=dict(
-        anchor_generator=dict(
-            ranges=[
-                [
-                    -30.0,
-                    -39.68,
-                    -6,
-                    -0.72,
-                    39.68,
-                    6,
-                ],
-            ],
-            reshape_out=False,
-            rotations=[
-                0.0,
-                1.57,
-            ],
-            sizes=[
-                [
-                    0.55,
-                    0.65,
-                    1.75,
-                ],
-                [
-                    0.65,
-                    0.9,
-                    1.1,
-                ],
-                [
-                    0.7,
-                    1.7,
-                    0.5,
-                ],
-            ],
-            type='AlignedAnchor3DRangeGenerator'),
-        assign_per_class=True,
-        bbox_coder=dict(type='DeltaXYZWLHRBBoxCoder'),
-        diff_rad_by_sin=True,
-        feat_channels=48,
-        in_channels=48,
-        loss_bbox=dict(
-            beta=0.1111111111111111,
-            loss_weight=2.0,
-            type='mmdet.SmoothL1Loss'),
-        loss_cls=dict(
-            alpha=0.25,
-            gamma=2.0,
-            loss_weight=1.0,
-            type='mmdet.FocalLoss',
-            use_sigmoid=True),
-        loss_dir=dict(
-            loss_weight=0.2, type='mmdet.CrossEntropyLoss', use_sigmoid=False),
-        num_classes=1,
-        type='Anchor3DHead',
-        use_direction_classifier=True),
-    data_preprocessor=dict(
-        type='Det3DDataPreprocessor',
-        voxel=True,
-        voxel_layer=dict(
-            max_num_points=32,
-            max_voxels=(
-                16000,
-                40000,
-            ),
-            point_cloud_range=[
-                -30.0,
-                -39.68,
-                -6,
-                -0.72,
-                39.68,
-                6,
-            ],
-            voxel_size=[
-                0.16,
-                0.16,
-                12.0,
-            ])),
-    middle_encoder=dict(
-        in_channels=16, output_shape=[
-            496,
-            192,
-        ], type='PointPillarsScatter'),
-    neck=dict(
-        in_channels=[
-            16,
-            32,
-            64,
-        ],
-        out_channels=[
-            16,
-            16,
-            16,
-        ],
-        type='SECONDFPN',
-        upsample_strides=[
-            1,
-            2,
-            4,
-        ]),
-    test_cfg=dict(
-        max_num=50,
-        min_bbox_size=0,
-        nms_across_levels=False,
-        nms_pre=100,
-        nms_thr=0.01,
-        score_thr=0.1,
-        use_rotate_nms=True),
-    train_cfg=dict(
-        allowed_border=0,
-        assigner=dict(
-            ignore_iof_thr=-1,
-            iou_calculator=dict(type='BboxOverlapsNearest3D'),
-            min_pos_iou=0.2,
-            neg_iou_thr=0.2,
-            pos_iou_thr=0.35,
-            type='Max3DIoUAssigner'),
-        debug=False,
-        pos_weight=-1),
-    type='VoxelNet',
-    voxel_encoder=dict(
-        feat_channels=[
-            16,
-        ],
-        in_channels=5,
-        point_cloud_range=[
-            -30.0,
-            -39.68,
-            -6,
-            -0.72,
-            39.68,
-            6,
-        ],
-        type='PillarFeatureNet',
-        voxel_size=[
-            0.16,
-            0.16,
-            12.0,
-        ],
-        with_distance=False))
 optim_wrapper = dict(
     clip_grad=dict(max_norm=10, norm_type=2),
     optimizer=dict(
@@ -333,7 +172,7 @@ test_evaluator = [
     ], type='Simple3DmAP'),
     dict(
         out_file_path=
-        '/pfss/mlde/workspaces/mlde_wsp_PI_Stryk/jw79daqu/mmdetection3d-dev-1.x/train_ws/others_paper_no_fp/pointpainting_60e_5/pointpillar_normalized_aug/results_train.pkl',
+        'work_dirs/pointpainting_rgb/results.pkl',
         type='DumpResults'),
 ]
 test_pipeline = [
@@ -571,7 +410,7 @@ vis_backends = [
 visualizer = dict(
     name='visualizer',
     save_dir=
-    '/pfss/mlde/workspaces/mlde_wsp_PI_Stryk/jw79daqu/mmdetection3d-dev-1.x/train_ws/others_paper_no_fp/pointpainting_60e_5/pointpillar_normalized_aug/vis',
+    'work_dirs/pointpainting_rgb/vis',
     type='Det3DLocalVisualizer',
     vis_backends=[
         dict(type='LocalVisBackend'),
@@ -582,4 +421,4 @@ voxel_size = [
     0.16,
     12.0,
 ]
-work_dir = '/pfss/mlde/workspaces/mlde_wsp_PI_Stryk/jw79daqu/mmdetection3d-dev-1.x/train_ws/others_paper_no_fp/pointpainting_60e_5/pointpillar_normalized_aug'
+work_dir = 'work_dirs/pointpainting_rgb'
